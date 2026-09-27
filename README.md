@@ -1,44 +1,36 @@
 # WordSmith MAX
 
-**Generateur de wordlists (listes de mots de passe) personnalisees** pour
-tests d'intrusion autorises et audits de mots de passe. Ecrit en Python pur,
-sans dependance externe.
+**Custom wordlist generator** for authorized penetration testing and password audits. Written in pure Python with zero external dependencies.
 
-Inspire de [CUPP](https://github.com/Mebus/cupp), WordSmith MAX va beaucoup
-plus loin : il combine des donnees OSINT sur une personne avec la
-psychologie reelle des mots de passe pour produire des millions de candidats
-realistes.
+Inspired by tools like [CUPP](https://github.com/Mebus/cupp), WordSmith MAX combines target OSINT details with real-world password psychology to generate realistic candidate lists.
 
 ---
 
-## Fonctionnalites
+## Features
 
-- **Profil OSINT complet** : prenom, nom, surnom, animal, entreprise, ville,
-  pays, enfant, conjoint, loisir, sport, nourriture, musique, film, ecole,
-  rue, telephone, chiffre favori, voiture, devise, date de naissance, date de
-  mariage.
-- **Moteur de psychologie des mots de passe** (schemas observes dans de
-  vraies fuites de donnees) :
-  - `Mot` + annee de naissance (`john2000`) et annees voisines
-  - `Mot` + suites numeriques (`john123`, `john12345678910`)
-  - Promenades clavier (`johnqwerty`, `johnazerty`, `john!@#$`)
-  - Decorations de symboles (`john!!1`, `john2000!`, `john#`)
-  - Dates dans tous les formats reels (`14032000`, `14/03`, `03142000`...)
-- **Toutes les mutations** sur chaque mot :
-  - Toutes les casses (`john`, `JOHN`, `John`, `jOhN`...)
-  - Inverse (`nhoj`) et double (`johnjohn`)
-  - Leetspeak multi-niveaux (`J0hn`, `J0hN`, `J0hn_d03`...)
-- **Combinaisons multi-mots** jusqu'a 3 tokens avec ``,`` `.` `_` `-`
-  (`john.doe2000`, `DoeJohn123!`)
-- **Sortie en streaming** : ecriture par chunks -> genere des millions
-  d'entrees sans saturer la RAM.
-- **Limite optionnelle** (`-N`) et compteur de progression en direct.
+- **Comprehensive OSINT Profile**: Names, dates, pets, partners, hobbies, street, phone numbers, and custom words.
+- **Password Psychology Engine**: Pattern rules derived from breach data analysis:
+  - `Word` + birth year (`john2000`) and neighboring years
+  - `Word` + numerical sequences (`john123`, `john12345678910`)
+  - Keyboard walks (`johnqwerty`, `johnazerty`, `john!@#$`)
+  - Symbol decorations (`john!!1`, `john2000!`, `john#`)
+  - Date permutations across all common formats (`14032000`, `14/03`, `03142000`...)
+- **Mutations & Combinations**:
+  - Full casing variations, reversal, and doubling
+  - Multi-level Leetspeak substitution
+  - Up to 3-token multi-word combinations using custom delimiters (`.`, `_`, `-`)
+- **Memory Efficient**: Streaming generator pattern writes output in chunks without memory exhaustion.
 
 ---
 
-## Installation
+## Quick Start
 
+### Interactive Mode (Recommended)
 ```bash
-git clone https://github.com/<ton-username>/wordsmith.git
-cd wordsmith
-python wordsmith.py -i
+python wordsmith.py -i -o wordlist.txt
+
+# Basic profile generation
+python wordsmith.py -f john -l doe -p rex -t paris -d 14/03/2000 -o john.txt
+
+# Generation capped at 1,000,000 candidates
+python wordsmith.py -f ahmed -l sam -p Rex -N 1000000 -o wordlist.txt
