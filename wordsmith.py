@@ -20,7 +20,7 @@ from datetime import datetime
 
 # ============================================================
 # 1. PROFIL : maximum d'infos sur la cible
-#    clé interne -> (option courte, libellé)
+#    cle interne -> (option courte, libelle)
 # ============================================================
 FIELDS = {
     "firstname": ("f", "Prenom"),
@@ -37,7 +37,7 @@ FIELDS = {
     "food":      ("g", "Nourriture / boisson"),
     "music":     ("u", "Artiste / chanteur"),
     "movie":     ("e", "Film / serie"),
-    "school":    ("h", "Ecole / universite"),
+    "school":    ("H", "Ecole / universite"),      # FIX: etait "h" (conflit avec --help)
     "street":    ("r", "Rue (road)"),
     "phone":     ("j", "Telephone (derniers chiffres)"),
     "favnum":    ("q", "Chiffre favori"),
@@ -47,14 +47,24 @@ FIELDS = {
     "wedding":   ("z", "Date mariage (JJ/MM/AAAA)"),
 }
 
+DATE_FIELDS = {"birthdate", "wedding"}
+NUM_FIELDS = {"phone", "favnum"}
+
 
 def interactive_profile():
     print("[*] Mode interactif - laissez vide pour ignorer.\n")
     p = {}
     for key, (_flag, label) in FIELDS.items():
-        val = input(f"  {label} [-{_flag}]: ").strip()
-        if val:
+        while True:
+            val = input(f"  {label} [-{_flag}]: ").strip()
+            if not val:
+                break
+            if key in DATE_FIELDS and not re.match(
+                    r"\d{1,2}[/\-.]\d{1,2}[/\-.]\d{4}", val):
+                print("      [!] Format attendu : JJ/MM/AAAA")
+                continue
             p[key] = val
+            break
     return p
 
 
@@ -158,7 +168,7 @@ def suffixes_for(profile: dict):
     s |= {w.upper() for w in KEYBOARD_WORDS}
     s |= {w.capitalize() for w in KEYBOARD_WORDS}
     s |= set(SYMBOL_SUFFIX)
-    for field in ("birthdate", "wedding"):
+    for field in DATE_FIELDS:
         if profile.get(field):
             s |= date_tokens(profile[field])
     for num in (profile.get("phone", ""), profile.get("favnum", "")):
@@ -176,7 +186,7 @@ def base_tokens(profile: dict):
     """Mots de base extraits du profil."""
     bases = set()
     for key in FIELDS:
-        if key in ("birthdate", "wedding", "phone", "favnum"):
+        if key in DATE_FIELDS or key in NUM_FIELDS:
             continue
         val = profile.get(key, "").strip()
         if val:
@@ -271,11 +281,30 @@ def main():
 
     profile = {k: v for k, v in vars(args).items()
                if k in FIELDS and v}
+
+    # Validation basique des valeurs
+    for k in list(profile):
+        if k in DATE_FIELDS and not re.match(
+                r"\d{1,2}[/\-.]\d{1,2}[/\-.]\d{4}", profile[k]):
+            ap.error(f"-{FIELDS[k][0]} : format attendu JJ/MM/AAAA "
+                     f"(recu : {profile[k]!r})")
+        if k in NUM_FIELDS and not profile[k].isdigit():
+            ap.error(f"-{FIELDS[k][0]} : valeur numerique attendue "
+                     f"(recu : {profile[k]!r})")
+        if k not in DATE_FIELDS and k not in NUM_FIELDS and \
+                profile[k].isdigit():
+            print(f"[!] -{FIELDS[k][0]} : valeur numerique dans un champ "
+                  f"texte - ignoree ({profile[k]!r})")
+            del profile[k]
+
     if args.interactive:
         profile.update(interactive_profile())
     if not profile:
         ap.error("Aucune information fournie. Utilisez -i ou des options "
                  "comme -f, -l, -p...")
+
+    if args.min > args.max:
+        ap.error("-m (min) doit etre <= -M (max)")
 
     print(f"[*] Profil : {profile}")
     if args.limit:
